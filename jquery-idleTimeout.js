@@ -12,7 +12,7 @@
  *
  * Dependencies: JQuery v1.7+, JQuery UI, store.js from https://github.com/marcuswestin/store.js - v1.3.4+
  *
- * version 1.0.12
+ * version 1.0.11
  **/
 
 /*global jQuery: false, document: false, store: false, clearInterval: false, setInterval: false, setTimeout: false, clearTimeout: false, window: false, alert: false*/
@@ -138,7 +138,6 @@
         activityDetector = function () {
 
             $('body').on(currentConfig.activityEvents, function () {
-console.log('activityDetector');
                 if ((store.get('idleTimerLoggedOut') !== true) && (!currentConfig.enableDialog || isDialogOpen() !== true)) {
                     startIdleTimer();
                 }
@@ -149,7 +148,6 @@ console.log('activityDetector');
         checkIdleTimeout = function () {
 
             var timeIdleTimeout = (store.get('idleTimerLastActivity') + (currentConfig.idleTimeLimit * 1000));
-					console.log('IN checkIdleTimeout');
 
             if ($.now() > timeIdleTimeout) {
 
@@ -160,7 +158,6 @@ console.log('activityDetector');
                     startDialogTimer(); // start timing the warning dialog
                 }
             } else if (store.get('idleTimerLoggedOut') === true) { //a 'manual' user logout?
-					console.log('checkIdleTimeout');
                 logoutUser();
             } else {
 
@@ -230,7 +227,6 @@ console.log('activityDetector');
             var timeDialogTimeout = (store.get('idleTimerLastActivity') + (currentConfig.idleTimeLimit * 1000) + (currentConfig.dialogDisplayLimit * 1000));
 
             if (($.now() > timeDialogTimeout) || (store.get('idleTimerLoggedOut') === true)) {
-				console.log('checkDialogTimeout');
                 logoutUser();
             }
         };
