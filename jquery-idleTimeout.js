@@ -26,11 +26,12 @@
         //## Public Configuration Variables
         //##############################
         var defaultConfig = {
-            redirectUrl: '/logout',      // redirect to this url on logout. Set to "redirectUrl: false" to disable redirect
+            redirectUrl: '/logout',				// redirect to this url on session expiration to logout. Set to "redirectUrl: false" to disable redirect
+			redirectUrlForLogoutByUser: false,	// redirect to this url on manual user logout
 
             // idle settings
-            idleTimeLimit: 1200,           // 'No activity' time limit in seconds. 1200 = 20 Minutes
-            idleCheckHeartbeat: 2,       // Frequency to check for idle timeouts in seconds
+            idleTimeLimit: 1200,		// 'No activity' time limit in seconds. 1200 = 20 Minutes
+            idleCheckHeartbeat: 2,		// Frequency to check for idle timeouts in seconds
 
             // optional custom callback to perform before logout
             customCallback: false,       // set to false for no customCallback
@@ -44,8 +45,8 @@
             activityEvents: 'click keypress scroll wheel mousewheel mousemove', // separate each event with a space
 
             // warning dialog box configuration
-            enableDialog: true,           // set to false for logout without warning dialog
-            dialogDisplayLimit: 180,       // Time to display the warning dialog before logout (and optional callback) in seconds. 180 = 3 Minutes
+            enableDialog: true,				// set to false for logout without warning dialog
+            dialogDisplayLimit: 180,		// Time to display the warning dialog before logout (and optional callback) in seconds. 180 = 3 Minutes
             dialogTitle: 'Session Expiration Warning', // also displays on browser title bar
             modifyPageTitle : true,
             dialogText: 'Because you have been inactive, your session is about to expire.',
@@ -67,7 +68,7 @@
                 
             },
             //event will be fired when dialog should be closed (if you will override it by custom)
-            onDialogShouldBeHided : function() {
+            onDialogShouldBeHidden : function() {
                 
             }
         },
@@ -101,14 +102,12 @@
         };
         //trigger "stay logged" popup scenario
         this.stayLogged = function () {
-            isDialogDisplayed = false;
             destroyWarningDialog();
-            stopDialogTimer();
             startIdleTimer();
         };
         //trigger "logout" popup scenario
         this.logoutUser = function () {
-            logoutUser();
+            logoutUser(true);
         };
         //##############################
         //## Private Functions
@@ -146,26 +145,22 @@
 
         //----------- IDLE TIMER FUNCTIONS --------------//
         checkIdleTimeout = function () {
-
             var timeIdleTimeout = (store.get('idleTimerLastActivity') + (currentConfig.idleTimeLimit * 1000));
 
             if ($.now() > timeIdleTimeout) {
-
                 if (!currentConfig.enableDialog) { // warning dialog is disabled
                     logoutUser(); // immediately log out user when user is idle for idleTimeLimit
-                } else if (currentConfig.enableDialog && isDialogOpen() !== true) {
-                    openWarningDialog();
-                    startDialogTimer(); // start timing the warning dialog
                 }
-            } else if (store.get('idleTimerLoggedOut') === true) { //a 'manual' user logout?
-                logoutUser();
-            } else {
-
-                if (currentConfig.enableDialog && isDialogOpen() === true) {
-                    destroyWarningDialog();
-                    stopDialogTimer();
+				else if (currentConfig.enableDialog && isDialogOpen() !== true) {
+                    openWarningDialog();
                 }
             }
+			else if (store.get('idleTimerLoggedOut') === true) { //a 'manual' user logout?
+                logoutUser();
+            }
+			else if (currentConfig.enableDialog && isDialogOpen() === true) {
+				destroyWarningDialog();
+			}
         };
 
         startIdleTimer = function () {
@@ -221,6 +216,8 @@
             if (currentConfig.sessionKeepAliveTimer) {
                 stopKeepSessionAlive();
             }
+
+			startDialogTimer(); // start timing the warning dialog
         };
 
         checkDialogTimeout = function () {
@@ -237,7 +234,6 @@
 
         stopDialogTimer = function () {
             clearInterval(dialogTimer);
-            clearInterval(remainingTimer);
         };
 
         isDialogOpen = function () {
@@ -245,7 +241,9 @@
         };
 
         destroyWarningDialog = function () {
-            currentConfig.onDialogShouldBeHided();
+			isDialogDisplayed = false;
+			stopDialogTimer();
+            currentConfig.onDialogShouldBeHidden();
             if(!currentConfig.useCustomPopup)
                 $("#idletimer_warning_dialog").dialog('destroy').remove();
             if (currentConfig.modifyPageTitle)
@@ -260,7 +258,11 @@
             var dialogDisplaySeconds = currentConfig.dialogDisplayLimit, mins, secs;
 
             remainingTimer = setInterval(function () {
-                mins = Math.floor(dialogDisplaySeconds / 60); // minutes
+				if (dialogDisplaySeconds < 0) {
+					dialogDisplaySeconds = 0;
+					clearInterval(remainingTimer);
+				}
+				mins = Math.floor(dialogDisplaySeconds / 60); // minutes
                 if (mins < 10) { mins = '0' + mins; }
                 secs = dialogDisplaySeconds - (mins * 60); // seconds
                 if (secs < 10) { secs = '0' + secs; }
@@ -276,8 +278,13 @@
         };
 
         //----------- LOGOUT USER FUNCTION --------------//
-        logoutUser = function () {
+        logoutUser = function (logoutByUser) {
+			stopIdleTimer();
             store.set('idleTimerLoggedOut', true);
+
+			if (isDialogOpen() === true) {
+				destroyWarningDialog();
+			}
 
             if (currentConfig.sessionKeepAliveTimer) {
                 stopKeepSessionAlive();
@@ -287,7 +294,11 @@
                 currentConfig.customCallback();
             }
 
-            if (currentConfig.redirectUrl) {
+			// Logout the user from the server and from all the browser's tabs
+			if (logoutByUser && currentConfig.redirectUrlForLogoutByUser) {
+                window.location.href = currentConfig.redirectUrlForLogoutByUser;
+			}
+			else if (currentConfig.redirectUrl) {
                 window.location.href = currentConfig.redirectUrl;
             }
         };
