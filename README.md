@@ -1,3 +1,27 @@
+# Fork info
+
+* The plugin tracks user activity across the the browser's tabs (and optionally pings the server to prolong the login session). If user was inactive for some period of time, a warning dialog with timer can be shown to notify that user will be logged out after certain time. If there is no response, the plugin will call logout URL in all the browser's tabs
+* Also for manual user logout on the site (even if session is not expired) it's recommended to use `logoutUser()` method of the plugin so that the user gets logged out from all the opened tabs
+* The repo is initially forked from user Nigrimmist which was forked from multiple other forks before
+* Some bugfixes were made and it was reworked to work with **Bootestrap modal**
+* To use **Bootstrap modal** please provide the following config settings:
+
+```Javascript
+{
+  enableDialog: true,					// set to false for logout without warning dialog
+  useCustomPopup : true,			// use bootstrap modal instead of jquery-ui
+  onPopupRequired: function() {
+    // Tell the plugin how to create the modal. Hopefully the modal is already initialized before
+    $myModal.modal('show');
+  },
+  onDialogShouldBeHidden: function() {
+    // Tell the plugin how to close the modal
+    $myModal.modal('hide');
+  }
+}
+```
+
+
 # jquery-idleTimeout
 
 Highly configurable idle (no activity) timer and logout redirect for jQuery.
