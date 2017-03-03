@@ -8,8 +8,8 @@
 
 ```Javascript
 {
-  enableDialog: true,					// set to false for logout without warning dialog
-  useCustomPopup : true,			// use bootstrap modal instead of jquery-ui
+  enableDialog: true,     // set to false for logout without warning dialog
+  useCustomPopup : true,  // use bootstrap modal instead of jquery-ui
   onPopupRequired: function() {
     // Tell the plugin how to create the modal. Hopefully the modal is already initialized before
     $myModal.modal('show');
